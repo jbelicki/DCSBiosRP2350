@@ -80,7 +80,7 @@ namespace DcsBios {
 				expander->writePin(expanderPin, state);
 				expander->setLEDBrightness(expanderPin, state ? brightness_ : 0);
 			}
-			else {4
+			else {
 				gpio_put(gpioPin, state);
 			}
 		}
