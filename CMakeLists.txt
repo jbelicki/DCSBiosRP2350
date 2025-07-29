@@ -23,7 +23,7 @@ if (EXISTS ${picoVscode})
     include(${picoVscode})
 endif()
 # ====================================================================================
-set(PICO_BOARD pico2 CACHE STRING "Board type")
+set(PICO_BOARD solderparty_rp2350_stamp_xl CACHE STRING "Board type")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
@@ -36,9 +36,9 @@ pico_sdk_init()
 # Add executable. Default name is the project name, version 0.1
 
 # add_executable(DCSBiosRP2350 DCSBiosRP2350.cpp)
-add_executable(DCSBiosRP2350 Fox1_Panel1.cpp)
+# add_executable(DCSBiosRP2350 Fox1_Panel1.cpp)
 # add_executable(DCSBiosRP2350 Fox2_Panel1.cpp)
-
+add_executable(DCSBiosRP2350 Fox2_Demo.cpp)
 
 
 pico_set_program_name(DCSBiosRP2350 "DCSBiosRP2350")

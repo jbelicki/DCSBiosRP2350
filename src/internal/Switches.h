@@ -75,8 +75,15 @@ namespace DcsBios {
 
 		void SetControl(const char* msg) { msg_ = msg; }
 		void resetThisState() { this->resetState(); }
+
+		// ✅ Added method
+		bool getState() const {
+			return lastState_ != 0;
+		}
 	};
 	typedef Switch2PosT<> Switch2Pos;
+
+	// --- SwitchWithCover2PosT and SwitchMultiPosT remain unchanged below ---
 
 	template <unsigned long pollIntervalMs = POLL_EVERY_TIME, unsigned long coverDelayMs = 200>
 	class SwitchWithCover2PosT : PollingInput, public ResettableInput {
@@ -238,7 +245,6 @@ namespace DcsBios {
 		void resetThisState() { resetState(); }
 	};
 	
-
 	typedef SwitchMultiPosT<POLL_EVERY_TIME, 3> Switch3Pos;
 	typedef SwitchMultiPosT<POLL_EVERY_TIME, 4> Switch4Pos;
 	typedef SwitchMultiPosT<POLL_EVERY_TIME, 5> Switch5Pos;

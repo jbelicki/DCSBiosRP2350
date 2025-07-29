@@ -1389,7 +1389,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "DCSBiosRP2350::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-DCSBiosRP2350-Debug-d580a10e3347348b0b72.json",
+					"jsonFile" : "target-DCSBiosRP2350-Debug-60998d86d92439584315.json",
 					"name" : "DCSBiosRP2350",
 					"projectIndex" : 0
 				},
@@ -1410,7 +1410,7 @@
 				{
 					"directoryIndex" : 20,
 					"id" : "bs2_default::@9e89cb6b53d747b62405",
-					"jsonFile" : "target-bs2_default-Debug-78c3bd9e50d9d849b7c7.json",
+					"jsonFile" : "target-bs2_default-Debug-0977f2792043d631bd3d.json",
 					"name" : "bs2_default",
 					"projectIndex" : 1
 				},

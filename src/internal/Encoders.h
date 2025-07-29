@@ -40,11 +40,10 @@ namespace DcsBios {
 		void resetState() { lastState_ = (lastState_ == 0) ? -1 : 0; }
 
 		void pollInput() {
-			uint32_t lastUpdate_ = 0;
 			uint32_t now = to_ms_since_boot(get_absolute_time());
-			if (now - lastUpdate_ < 20) return;  // Throttle to one event every 10ms
+			if (now - lastUpdate_ < 20) return;
 			lastUpdate_ = now;
-		
+
 			char state = readState();
 			switch (lastState_) {
 				case 0: if (state == 2) delta_--; if (state == 1) delta_++; break;
@@ -53,7 +52,7 @@ namespace DcsBios {
 				case 3: if (state == 1) delta_--; if (state == 2) delta_++; break;
 			}
 			lastState_ = state;
-		
+
 			if (delta_ >= stepsPerDetent) {
 				if (tryToSendDcsBiosMessage(msg_, incArg_)) delta_ -= stepsPerDetent;
 			}
@@ -61,7 +60,6 @@ namespace DcsBios {
 				if (tryToSendDcsBiosMessage(msg_, decArg_)) delta_ += stepsPerDetent;
 			}
 		}
-		
 
 	public:
 		RotaryEncoderT(const char* msg, const char* decArg, const char* incArg, char pinA, char pinB)
@@ -88,7 +86,18 @@ namespace DcsBios {
 
 		void SetControl(const char* msg) { msg_ = msg; }
 		void resetThisState() { resetState(); }
+
+		signed char getDelta() {
+			signed char result = delta_;
+			delta_ = 0;
+			return result;
+		}
+
+		void poll() {
+			this->pollInput();
+		}
 	};
+
 	typedef RotaryEncoderT<> RotaryEncoder;
 
 	// You can apply the same pattern to RotaryAcceleratedEncoderT when needed.

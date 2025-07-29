@@ -104,7 +104,7 @@
 				},
 				{
 					"backtrace" : 8,
-					"define" : "PICO_BOARD=\"pico2\""
+					"define" : "PICO_BOARD=\"solderparty_rp2350_stamp_xl\""
 				},
 				{
 					"backtrace" : 8,
