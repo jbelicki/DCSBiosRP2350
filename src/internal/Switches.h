@@ -76,7 +76,6 @@ namespace DcsBios {
 		void SetControl(const char* msg) { msg_ = msg; }
 		void resetThisState() { this->resetState(); }
 
-		// ✅ Added method
 		bool getState() const {
 			return lastState_ != 0;
 		}
@@ -249,6 +248,136 @@ namespace DcsBios {
 	typedef SwitchMultiPosT<POLL_EVERY_TIME, 4> Switch4Pos;
 	typedef SwitchMultiPosT<POLL_EVERY_TIME, 5> Switch5Pos;
 
+
+	template <unsigned long pollIntervalMs = POLL_EVERY_TIME>
+	class Switch3Pos2PinT : PollingInput, public ResettableInput {
+	private:
+		const char* msg_;
+		bool useExpander_;
+		AW9523B* expander_;
+		uint8_t pins_[2];                 // pins_[0] = A, pins_[1] = B
+
+		int8_t lastState_;                // -1 unknown, else 0/1/2
+		int8_t debounceCandidate_;        // candidate logical state awaiting debounce
+		unsigned long debounceDelay_;     // like other classes
+		unsigned long lastDebounceTime_;  // when candidate was (re)observed
+
+		// Center watchdog (forces center after stable HIGH/HIGH for debounceDelay_)
+		unsigned long centerStableSince_;
+
+		// Active-LOW read (external pull-ups)
+		inline char readInput(uint8_t idx) {
+			if (useExpander_ && expander_) return expander_->readPin(pins_[idx]);
+			return gpio_get(pins_[idx]);
+		}
+
+		// Map raw A/B to logical position; return -1 if invalid (both active)
+		inline int8_t mapLogical(bool aActive, bool bActive) {
+			if (aActive && bActive)   return -1; // transient during travel: ignore, hold last
+			if (aActive && !bActive)  return 0;  // A thrown
+			if (!aActive && !bActive) return 1;  // center
+			/* !aActive && bActive */ return 2;  // B thrown
+		}
+
+		void resetState() {
+			lastState_ = -1;
+			debounceCandidate_ = -1;
+			lastDebounceTime_ = 0;
+			centerStableSince_ = 0;
+		}
+
+		void pollInput() {
+			const unsigned long now = to_ms_since_boot(get_absolute_time());
+
+			// Read raw pins (active when LOW)
+			const bool aActive = (readInput(0) == 0);
+			const bool bActive = (readInput(1) == 0);
+
+			// Center watchdog: if both HIGH and stable for debounceDelay_, force center=1
+			const bool isCenterPhysical = (!aActive && !bActive);
+			if (isCenterPhysical) {
+				if (centerStableSince_ == 0) centerStableSince_ = now;
+				if ((now - centerStableSince_) >= debounceDelay_) {
+					if (lastState_ != 1) {
+						char msgBuffer[3];
+						snprintf(msgBuffer, sizeof(msgBuffer), "%d", 1);
+						if (tryToSendDcsBiosMessage(msg_, msgBuffer)) {
+							lastState_ = 1;
+						}
+					}
+					// Align logical debounce state with enforced center and exit
+					debounceCandidate_ = 1;
+					lastDebounceTime_  = now;
+					return;
+				}
+			} else {
+				centerStableSince_ = 0; // reset when not physically centered
+			}
+
+			// Determine current logical candidate
+			const int8_t logical = mapLogical(aActive, bActive);
+
+			// If invalid combo (both active), do not change candidate; just hold last.
+			if (logical < 0) return;
+
+			// Debounce the logical state (like your other classes)
+			if (logical != debounceCandidate_) {
+				debounceCandidate_ = logical;
+				lastDebounceTime_  = now;
+			}
+
+			if ((now - lastDebounceTime_) >= debounceDelay_) {
+				if (debounceCandidate_ != lastState_) {
+					char msgBuffer[3];
+					snprintf(msgBuffer, sizeof(msgBuffer), "%d", debounceCandidate_);
+					if (tryToSendDcsBiosMessage(msg_, msgBuffer)) {
+						lastState_ = debounceCandidate_;
+					}
+				}
+			}
+		}
+
+	public:
+		// GPIO constructor (two discrete pins)
+		Switch3Pos2PinT(const char* msg, uint8_t pinA, uint8_t pinB, unsigned long debounceDelay = 50) :
+			PollingInput(pollIntervalMs),
+			msg_(msg),
+			useExpander_(false),
+			expander_(nullptr),
+			lastState_(-1),
+			debounceCandidate_(-1),
+			debounceDelay_(debounceDelay),
+			lastDebounceTime_(0),
+			centerStableSince_(0)
+		{
+			pins_[0] = pinA; pins_[1] = pinB;
+			gpio_init(pins_[0]); gpio_pull_up(pins_[0]); gpio_set_dir(pins_[0], GPIO_IN);
+			gpio_init(pins_[1]); gpio_pull_up(pins_[1]); gpio_set_dir(pins_[1], GPIO_IN);
+			resetState();
+		}
+
+		// AW9523B constructor (two pins on expander)
+		Switch3Pos2PinT(const char* msg, AW9523B* expander, uint8_t pinA, uint8_t pinB, unsigned long debounceDelay = 50) :
+			PollingInput(pollIntervalMs),
+			msg_(msg),
+			useExpander_(true),
+			expander_(expander),
+			lastState_(-1),
+			debounceCandidate_(-1),
+			debounceDelay_(debounceDelay),
+			lastDebounceTime_(0),
+			centerStableSince_(0)
+		{
+			pins_[0] = pinA; pins_[1] = pinB;
+			expander_->setPinInput(pins_[0]); // no internal pulls; external pull-ups present
+			expander_->setPinInput(pins_[1]);
+			resetState();
+		}
+
+		void SetControl(const char* msg) { msg_ = msg; }
+		void resetThisState() { resetState(); }
+	};
+	typedef Switch3Pos2PinT<> Switch3Pos2Pin;
 } // namespace DcsBios
 
 #endif

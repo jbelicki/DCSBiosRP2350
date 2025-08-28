@@ -38,7 +38,8 @@ pico_sdk_init()
 # add_executable(DCSBiosRP2350 DCSBiosRP2350.cpp)
 # add_executable(DCSBiosRP2350 Fox1_Panel1.cpp)
 # add_executable(DCSBiosRP2350 Fox2_Panel1.cpp)
-add_executable(DCSBiosRP2350 Fox2_Demo.cpp)
+# add_executable(DCSBiosRP2350 Fox2_Demo.cpp)
+add_executable(DCSBiosRP2350 Fox1_Panel_Switch.cpp)
 
 
 pico_set_program_name(DCSBiosRP2350 "DCSBiosRP2350")
